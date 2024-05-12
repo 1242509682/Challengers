@@ -4,7 +4,7 @@
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-        <AssemblyName>$(MSBuildProjectName) v1.0.3</AssemblyName>
+        <AssemblyName>$(MSBuildProjectName) v1.0.9</AssemblyName>
         <PackageId>$(AssemblyName)</PackageId>
     </PropertyGroup>
     <ItemGroup>
