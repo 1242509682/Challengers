@@ -1,9 +1,9 @@
 ﻿using ChalleAnger;
+using Google.Protobuf.WellKnownTypes;
 using Microsoft.Xna.Framework;
 using Newtonsoft.Json;
-using NuGet.Protocol.Plugins;
-using Org.BouncyCastle.Asn1.Cmp;
 using OTAPI;
+using System.Configuration;
 using System.Text;
 using Terraria;
 using Terraria.GameContent.Events;
@@ -35,7 +35,7 @@ namespace Challenger
 
         public override string Name => "Challenger";
 
-        public override Version Version => new Version(1, 0, 0, 8);
+        public override Version Version => new Version(1, 0, 1, 1);
 
         public Challenger(Main game)
             : base(game)
@@ -57,7 +57,7 @@ namespace Challenger
             ServerApi.Hooks.NpcStrike.Register((TerrariaPlugin)(object)this, OnNpcStrike);
             GetDataHandlers.PlayerSlot.Register(OnHoldItem, (HandlerPriority)3, false);
             ServerApi.Hooks.NetGreetPlayer.Register((TerrariaPlugin)(object)this, OnGreetPlayer);
-            //ServerApi.Hooks.ServerLeave.Register((TerrariaPlugin)(object)this, OnServerLeave);
+            ServerApi.Hooks.ServerLeave.Register((TerrariaPlugin)(object)this, OnServerLeave);
             Commands.ChatCommands.Add(new Command("challenger.enable", new CommandDelegate(EnableModel), new string[1] { "cenable" })
             {
                 HelpText = "输入 /cenable  来启用挑战模式，再次使用取消"
@@ -87,7 +87,7 @@ namespace Challenger
                 ServerApi.Hooks.NpcStrike.Deregister((TerrariaPlugin)(object)this, OnNpcStrike);
                 GetDataHandlers.PlayerSlot.UnRegister(OnHoldItem);
                 ServerApi.Hooks.NetGreetPlayer.Deregister((TerrariaPlugin)(object)this, OnGreetPlayer);
-                //   ServerApi.Hooks.ServerLeave.Deregister((TerrariaPlugin)(object)this, OnServerLeave);
+                ServerApi.Hooks.ServerLeave.Deregister((TerrariaPlugin)(object)this, OnServerLeave);
             }
             base.Dispose(disposing);
         }
@@ -166,7 +166,6 @@ namespace Challenger
                 {
                     foreach (int buffId in config.AnglerArmorEffectList)
                     {
-                        // 为玩家设置BUFF，持续时间为180秒，不显示图标
                         TShock.Players[player.whoAmI].SetBuff(buffId, 180, false);
                     }
                 }
@@ -228,8 +227,10 @@ namespace Challenger
             var any = config.CrimsonArmorEffect;
             var any2 = config.CrimsonArmorEffect_2;
             var any3 = config.CrimsonArmorEffect_3;
+            var any4 = config.CrimsonArmorEffect_4;
+
             CPlayer cPlayer = Collect.cplayers[args.Player.whoAmI];
-            if (args.Player.armor[0].type != 792 || args.Player.armor[1].type != 793 || args.Player.armor[2].type != 794 || !args.Critical || Timer - cPlayer.CrimsonArmorEffectTimer < 300 || !args.Npc.CanBeChasedBy(null, false))
+            if (args.Player.armor[0].type != 792 || args.Player.armor[1].type != 793 || args.Player.armor[2].type != 794 || !args.Critical || Timer - cPlayer.CrimsonArmorEffectTimer <= any4 || !args.Npc.CanBeChasedBy(null, false))
             {
                 return;
             }
@@ -258,9 +259,10 @@ namespace Challenger
             var any = config.ShadowArmorEffect;
             var any2 = config.ShadowArmorEffect_2;
             var any3 = config.ShadowArmorEffect_3;
+            var any4 = config.ShadowArmorEffect_4;
 
             Item[] armor = args.Player.armor;
-            if ((armor[0].netID == 102 || armor[0].netID == 956) && (armor[1].netID == 101 || armor[1].netID == 957) && (armor[2].netID == 100 || armor[2].netID == 958) && args.Critical && Timer - Collect.cplayers[args.Player.whoAmI].ShadowArmorEffectTimer >= 60)
+            if ((armor[0].netID == 102 || armor[0].netID == 956) && (armor[1].netID == 101 || armor[1].netID == 957) && (armor[2].netID == 100 || armor[2].netID == 958) && args.Critical && Timer - Collect.cplayers[args.Player.whoAmI].ShadowArmorEffectTimer >= any4)
             {
                 int num = Main.rand.Next(2, 6);
                 for (int i = 0; i < num; i++)
@@ -299,11 +301,12 @@ namespace Challenger
                 var any = config.MeteorArmorEffect_2;
                 var any2 = config.MeteorArmorEffect_3;
                 var any3 = config.MeteorArmorEffect_4;
+                var any4 = config.MeteorArmorEffect_5;
 
                 if (config.MeteorArmorEffect)
                 {
                     Item[] armor2 = player.armor;
-                    if (armor2[0].netID == 123 && armor2[1].netID == 124 && armor2[2].netID == 125 && Timer % 120 == 0)
+                    if (armor2[0].netID == 123 && armor2[1].netID == 124 && armor2[2].netID == 125 && Timer % any4 == 0)
                     {
                         int index = Collect.MyNewProjectile(null, player.Center + new Vector2(Main.rand.Next(-860, 861), -600f), Terraria.Utils.RotateRandom(Vector2.UnitY, 0.3) * any3, any, any2, 0f, player.whoAmI);
                         CProjectile.Update(index);
@@ -321,9 +324,10 @@ namespace Challenger
                 var any3 = config.JungleArmorEffect_4;
                 var any4 = config.JungleArmorEffect_5;
                 var any5 = config.JungleArmorEffect_6;
+                var any6 = config.JungleArmorEffect_7;
 
                 Item[] armor = player.armor;
-                if ((armor[0].type == 228 || armor[0].type == 960) && (armor[1].type == 229 || armor[1].type == 961) && (armor[2].type == 230 || armor[2].type == 962) && Main.rand.Next(15) == 0)
+                if ((armor[0].type == 228 || armor[0].type == 960) && (armor[1].type == 229 || armor[1].type == 961) && (armor[2].type == 230 || armor[2].type == 962) && Main.rand.Next(15) == 0 && Timer % any6 == 0)
                 {
                     int index = Collect.MyNewProjectile(player.GetProjectileSource_Accessory(armor[0]), player.Center, Terraria.Utils.RotatedByRandom(Vector2.One, 6.2831854820251465) * any, Main.rand.Next(any2, any3), any4, any5, player.whoAmI);
                     CProjectile.Update(index);
@@ -336,8 +340,10 @@ namespace Challenger
             if (config.BeeArmorEffect)
             {
                 var any = config.BeeArmorEffectTime;
+                var any2 = config.BeeArmorEffect_1;
+
                 Item[] armor = player.armor;
-                if (armor[0].type == 2361 && armor[1].type == 2362 && armor[2].type == 2363 && Timer % 120 == 0)
+                if (armor[0].type == 2361 && armor[1].type == 2362 && armor[2].type == 2363 && Timer % any2 == 0)
                 {
                     foreach (var buffId in config.BeeArmorEffectList)
                     {
@@ -358,14 +364,17 @@ namespace Challenger
                 var any = config.NecroArmor_2;
                 var any2 = config.NecroArmor_3;
                 var any3 = config.NecroArmor_4;
+                var time = config.NecroArmor_Time;
+
                 var any4 = config.NecroArmor_5;
                 var any5 = config.NecroArmor_6;
                 var any6 = config.NecroArmor_7;
+                var time2 = config.NecroArmor_Time2; 
 
                 if (e != null)
                 {
                     Item[] armor = Main.player[e.Player.Index].armor;
-                    if ((armor[0].type == 151 || armor[0].type == 959) && armor[1].type == 152 && armor[2].type == 153)
+                    if ((armor[0].type == 151 || armor[0].type == 959) && armor[1].type == 152 && armor[2].type == 153 && Timer % time == 0)
                     {
                         for (int i = 0; i < 8; i++)
                         {
@@ -378,7 +387,7 @@ namespace Challenger
                 else if (args != null)
                 {
                     Item[] armor2 = args.Player.armor;
-                    if ((armor2[0].type == 151 || armor2[0].type == 959) && armor2[1].type == 152 && armor2[2].type == 153 && Main.rand.Next(3) == 0)
+                    if ((armor2[0].type == 151 || armor2[0].type == 959) && armor2[1].type == 152 && armor2[2].type == 153 && Main.rand.Next(3) == 0 && Timer % time2 == 0)
                     {
                         Vector2 val = args.Player.Center + Terraria.Utils.RotatedByRandom(Vector2.One, 3.1415927410125732) * 0.1f * Main.rand.Next(0, 500);
                         int index2 = Collect.MyNewProjectile(null, val, (args.Npc.Center + new Vector2(0f, -10f) - val) * 0.02f, any4, any5, any6, args.Player.whoAmI);
@@ -615,6 +624,7 @@ namespace Challenger
                 Vector2 center;
                 int num;
                 int num2;
+                var any = config.CrystalAssassinArmorEffect_5;
 
                 if (player != null)
                 {
@@ -630,7 +640,7 @@ namespace Challenger
                     num = config.CrystalAssassinArmorEffect_3;//自定义弹幕ID
                     num2 = e.Player.Index;
                 }
-                if (armor[0].type == 4982 && armor[1].type == 4983 && armor[2].type == 4984 && (Timer % 50 == 0L || e != null) && (NearestHostileNPC(Main.player[num2].Center, 360000f) != null || e != null))
+                if (armor[0].type == 4982 && armor[1].type == 4983 && armor[2].type == 4984 && (Timer % any == 0L || e != null) && (NearestHostileNPC(Main.player[num2].Center, 360000f) != null || e != null))
                 {
                     for (int i = 0; i < 20; i++)
                     {
@@ -669,9 +679,10 @@ namespace Challenger
                 var any = config.FrostArmorEffect_2;
                 var any2 = config.FrostArmorEffect_3;
                 var any3 = config.FrostArmorEffect_4;
+                var any4 = config.FrostArmorEffect_5;
 
                 Item[] armor = player.armor;
-                if (armor[0].type == 684 && armor[1].type == 685 && armor[2].type == 686 && Timer % 7 == 0)
+                if (armor[0].type == 684 && armor[1].type == 685 && armor[2].type == 686 && Timer % any4 == 0)
                 {
                     Vector2 postion = player.Center + new Vector2(Main.rand.Next(-860, 861), -600f);
                     int index = Collect.MyNewProjectile(null, postion, Vector2.UnitY, any, any2, any3, player.whoAmI, 0f, Main.rand.Next(3));
@@ -685,13 +696,14 @@ namespace Challenger
             var any = config.HallowedArmorEffect;
             var any2 = config.HallowedArmorEffect_2;
             var any3 = config.HallowedArmorEffect_3;
+            var any4 = config.HallowedArmorEffect_Time;
 
             if (args.KnockBack == 1.14514f || Main.player[args.Player.whoAmI].ownedProjectileCounts[any2] + Main.player[args.Player.whoAmI].ownedProjectileCounts[any3] >= 75)
             {
                 return;
             }
             Item[] armor = args.Player.armor;
-            if ((armor[1].type == 551 || armor[1].type == 4900) && (armor[2].type == 552 || armor[2].type == 4901) && (armor[0].type == 559 || armor[0].type == 553 || armor[0].type == 558 || armor[0].type == 4873 || armor[0].type == 4896 || armor[0].type == 4897 || armor[0].type == 4898 || armor[0].type == 4899))
+            if ((armor[1].type == 551 || armor[1].type == 4900) && (armor[2].type == 552 || armor[2].type == 4901) && (armor[0].type == 559 || armor[0].type == 553 || armor[0].type == 558 || armor[0].type == 4873 || armor[0].type == 4896 || armor[0].type == 4897 || armor[0].type == 4898 || armor[0].type == 4899) && Timer % any4 == 0)
             {
                 if (Collect.cplayers[args.Player.whoAmI].HallowedArmorState)
                 {
@@ -758,7 +770,7 @@ namespace Challenger
                 int num = Main.rand.Next(15, 25);
                 for (int i = 0; i < num; i++)
                 {
-                    Vector2 val = Terraria.Utils.RotatedBy(Vector2.UnitY, (double)((float)Math.PI * 2f / num * i + (float)Math.PI * 2f / (num * 2)), default(Vector2)) * (Terraria.Utils.NextFloat(Main.rand) * 3f + 9f);
+                    Vector2 val = Terraria.Utils.RotatedBy(Vector2.UnitY, (double)((float)Math.PI * 2f / num * i + (float)Math.PI * 2f / (num * 2)), default) * (Terraria.Utils.NextFloat(Main.rand) * 3f + 9f);
                     if (val.Y > 0f)
                     {
                         val.Y *= 0.5f;
@@ -796,6 +808,7 @@ namespace Challenger
             var Any = config.TikiArmorEffect;
             var Any2 = config.TikiArmorEffect_2;
             var Any3 = config.TikiArmorEffect_3;
+            var Any4 = config.TikiArmorEffect_4;
 
             if (args != null)
             {
@@ -814,7 +827,7 @@ namespace Challenger
                     num = 20;
                     num2 = 70;
                 }
-                if (flag && args.Projectile.ai[0] >= num && args.Projectile.ai[0] <= num2 && args.Projectile.ai[0] % 3f == 0f)
+                if (flag && args.Projectile.ai[0] >= num && args.Projectile.ai[0] <= num2 && args.Projectile.ai[0] % 3f == 0f && Timer % Any4 == 0)
                 {
                     List<Vector2> list = new List<Vector2>();
                     Projectile.FillWhipControlPoints(args.Projectile, list);
@@ -850,12 +863,14 @@ namespace Challenger
             }
         }
 
-        public void BeetleArmorEffect(Player? player, GetDataHandlers.PlayerDamageEventArgs? e, NpcStrikeEventArgs? args)
+        public void BeetleArmorEffect(Player? player, PlayerDamageEventArgs? e, NpcStrikeEventArgs? args)
         {
             var any1 = config.BeetleArmorEffect_1;//生命上限
             var any2 = config.BeetleArmorEffect_2;//圣骑士锤伤害
             var any3 = config.BeetleArmorEffect_3;//自定义受伤回血比例
             var any4 = config.BeetleArmorEffect_4;//弹幕ID
+            var any5 = config.BeetleArmorEffect_5;//治疗弹幕间隔
+            var any6 = config.BeetleArmorEffect_6;//攻击弹幕间隔
 
             if (player != null)
             {
@@ -888,7 +903,7 @@ namespace Challenger
             if (e != null)
             {
                 Item[] armor2 = Main.player[e.Player.Index].armor;
-                if (armor2[0].type == 2199 && (armor2[1].type == 2200 || armor2[1].type == 2201) && armor2[2].type == 2202)
+                if (armor2[0].type == 2199 && (armor2[1].type == 2200 || armor2[1].type == 2201) && armor2[2].type == 2202 && Timer % any5 == 0)
                 {
                     Vector2 center = Main.player[e.Player.TPlayer.whoAmI].Center;
                     int num = (int)(e.Damage * any3);
@@ -907,7 +922,7 @@ namespace Challenger
                     break;
                 }
             }
-            if (flag2 && args.KnockBack != 20.114f)
+            if (flag2 && args.KnockBack != 20.114f && Timer % any6 == 0)
             {
                 double num2 = Main.rand.NextDouble();
                 Vector2 val = args.Npc.Center + new Vector2((float)Math.Cos(num2 * 6.2831854820251465), (float)Math.Sin(num2 * 6.2831854820251465)) * 250f;
@@ -921,58 +936,62 @@ namespace Challenger
         {
             if (config.ShroomiteArmorEffect)
             {
-                var any = config.ShroomiteArmorEffect_1;
-                var any2 = config.ShroomiteArmorEffect_2;
-                var any3 = config.ShroomiteArmorEffect_3;
-
-                Vector2 val;
-                if (projectile != null)
+                var any4 = config.ShroomiteArmorEffect_4;
+                if (Timer % any4 == 0)
                 {
-                    if (Main.player[projectile.owner].ownedProjectileCounts[any] >= 100 || projectile.knockBack == any3)
+                    var any = config.ShroomiteArmorEffect_1;
+                    var any2 = config.ShroomiteArmorEffect_2;
+                    var any3 = config.ShroomiteArmorEffect_3;
+
+                    Vector2 val;
+                    if (projectile != null)
                     {
-                        return;
-                    }
-                    Item[] armor = Main.player[projectile.owner].armor;
-                    bool flag = (armor[0].type == 1546 || armor[0].type == 1547 || armor[0].type == 1548) && armor[1].type == 1549 && armor[2].type == 1550;
-                    bool flag2 = projectile.type == 90 || projectile.type == 92 || projectile.type == 640 || projectile.type == 631;
-                    if (!(!flag2 && flag) || !projectile.ranged)
-                    {
-                        return;
-                    }
-                    val = projectile.Center - Main.player[projectile.owner].Center;
-                    if (((Vector2)(val)).LengthSquared() <= 921600f)
-                    {
-                        int num = Main.rand.Next(1, 5);
-                        for (int i = 0; i < num; i++)
+                        if (Main.player[projectile.owner].ownedProjectileCounts[any] >= 100 || projectile.knockBack == any3)
                         {
-                            Vector2 unitY = Vector2.UnitY;
-                            double num2 = (double)((float)Math.PI * 2f / num * i) + Main.time % 3.0;
-                            val = default(Vector2);
-                            Vector2 velocity = Terraria.Utils.RotatedBy(unitY, num2, val) * 20f;
-                            int index = Collect.MyNewProjectile(Projectile.GetNoneSource(), projectile.Center, velocity, any, (int)(projectile.damage * any2), any3, projectile.owner);
-                            CProjectile.Update(index);
+                            return;
                         }
-                    }
-
-                }
-                else
-                {
-                    if (args.Player.ownedProjectileCounts[any] >= 100 || args.KnockBack == any3)
-                    {
-                        return;
-                    }
-                    Item[] armor2 = args.Player.armor;
-                    if ((armor2[0].type == 1546 || armor2[0].type == 1547 || armor2[0].type == 1548) && armor2[1].type == 1549 && armor2[2].type == 1550)
-                    {
-                        int num3 = Main.rand.Next(1, 4);
-                        for (int j = 0; j < num3; j++)
+                        Item[] armor = Main.player[projectile.owner].armor;
+                        bool flag = (armor[0].type == 1546 || armor[0].type == 1547 || armor[0].type == 1548) && armor[1].type == 1549 && armor[2].type == 1550;
+                        bool flag2 = projectile.type == 90 || projectile.type == 92 || projectile.type == 640 || projectile.type == 631;
+                        if (!(!flag2 && flag) || !projectile.ranged)
                         {
-                            Vector2 unitY2 = Vector2.UnitY;
-                            double num4 = (double)((float)Math.PI * 2f / num3 * j) + Main.time % 3.14;
-                            val = default(Vector2);
-                            Vector2 val2 = Terraria.Utils.RotatedBy(unitY2, num4, val) * 70f;
-                            int index2 = Collect.MyNewProjectile(null, args.Npc.Center + val2, Vector2.Zero, any, (int)(args.Damage * any2), any3, args.Player.whoAmI);
-                            CProjectile.Update(index2);
+                            return;
+                        }
+                        val = projectile.Center - Main.player[projectile.owner].Center;
+                        if (((Vector2)(val)).LengthSquared() <= 921600f)
+                        {
+                            int num = Main.rand.Next(1, 5);
+                            for (int i = 0; i < num; i++)
+                            {
+                                Vector2 unitY = Vector2.UnitY;
+                                double num2 = (double)((float)Math.PI * 2f / num * i) + Main.time % 3.0;
+                                val = default;
+                                Vector2 velocity = Terraria.Utils.RotatedBy(unitY, num2, val) * 20f;
+                                int index = Collect.MyNewProjectile(Projectile.GetNoneSource(), projectile.Center, velocity, any, (int)(projectile.damage * any2), any3, projectile.owner);
+                                CProjectile.Update(index);
+                            }
+                        }
+
+                    }
+                    else
+                    {
+                        if (args.Player.ownedProjectileCounts[any] >= 100 || args.KnockBack == any3)
+                        {
+                            return;
+                        }
+                        Item[] armor2 = args.Player.armor;
+                        if ((armor2[0].type == 1546 || armor2[0].type == 1547 || armor2[0].type == 1548) && armor2[1].type == 1549 && armor2[2].type == 1550)
+                        {
+                            int num3 = Main.rand.Next(1, 4);
+                            for (int j = 0; j < num3; j++)
+                            {
+                                Vector2 unitY2 = Vector2.UnitY;
+                                double num4 = (double)((float)Math.PI * 2f / num3 * j) + Main.time % 3.14;
+                                val = default;
+                                Vector2 val2 = Terraria.Utils.RotatedBy(unitY2, num4, val) * 70f;
+                                int index2 = Collect.MyNewProjectile(null, args.Npc.Center + val2, Vector2.Zero, any, (int)(args.Damage * any2), any3, args.Player.whoAmI);
+                                CProjectile.Update(index2);
+                            }
                         }
                     }
                 }
@@ -1082,6 +1101,7 @@ namespace Challenger
                 var any = config.SpookyArmorEffect_2; //阴森套白天弹幕
                 var any2 = config.SpookyArmorEffect_3; //阴森套晚上弹幕
                 var any3 = config.SpookyArmorEffect_4; //阴森套弹幕伤害
+                var any4 = config.SpookyArmorEffect_5; //阴森套弹幕间隔
 
                 Item[] armor = Main.player[args.Projectile.owner].armor;
                 Player val = Main.player[args.Projectile.owner];
@@ -1089,7 +1109,7 @@ namespace Challenger
                 int num = ((mode == 0) ? 13 : 35);
                 int num2 = ((mode == 0) ? 48 : 70);
                 int type = (Main.dayTime ? any : any2);
-                if (flag && args.Projectile.ai[0] >= num && args.Projectile.ai[0] <= num2 && args.Projectile.ai[0] % 4f == 0f)
+                if (flag && args.Projectile.ai[0] >= num && args.Projectile.ai[0] <= num2 && args.Projectile.ai[0] % 4f == 0f && Timer % any4 == 0)
                 {
                     List<Vector2> list = new List<Vector2>();
                     Projectile.FillWhipControlPoints(args.Projectile, list);
@@ -1105,7 +1125,8 @@ namespace Challenger
         {
             if (config.HivePack)
             {
-                if (Main.rand.Next(30) == 0)
+                var any7 = config.HivePack_Time1;
+                if (Main.rand.Next(30) == 0 && Timer % any7 == 0)
                 {
                     Honey.NewCProjectile(player.Center, -Terraria.Utils.RotatedByRandom(Vector2.UnitY, 1.5707963705062866) * 7f, 2, player.whoAmI, new float[1]);
                 }
@@ -1116,13 +1137,17 @@ namespace Challenger
         {
             if (config.RoyalGel && config.RoyalGelList.Length > 0)
             {
-                var List = config.RoyalGelList[Main.rand.Next(config.RoyalGelList.Length)];
-
-                if (Timer % 120 == 0)
+                if (Main.rand.Next(1, 101) <= config.RoyalGel_rand)
                 {
-                    int num = Item.NewItem(null, player.Center + new Vector2(Main.rand.Next(-860, 861), -600f), new Vector2(36f, 36f), List, 1, false, 0, false, false);
-                    Main.item[num].color = new Color(Main.rand.Next(256), Main.rand.Next(256), Main.rand.Next(256));
-                    TSPlayer.All.SendData((PacketTypes)88, null, num, 1f, 0f, 0f, 0);
+                    var itemList = config.RoyalGelList;
+                    var list = itemList[Main.rand.Next(itemList.Length)];
+
+                    if (Timer % config.RoyalGel_Timer == 0)
+                    {
+                        int num = Item.NewItem(null, player.Center + new Vector2(Main.rand.Next(-860, 861), -600f), new Vector2(36f, 36f), list, 1, false, 0, false, false);
+                        Main.item[num].color = new Color(Main.rand.Next(256), Main.rand.Next(256), Main.rand.Next(256));
+                        TSPlayer.All.SendData((PacketTypes)88, null, num, 1f, 0f, 0f, 0);
+                    }
                 }
             }
         }
@@ -1138,7 +1163,7 @@ namespace Challenger
             }
             if (Timer - Collect.cplayers[player.whoAmI].CthulhuShieldTime == (time * 60))
             {
-                SendPlayerText(TShock.Players[player.whoAmI], "克苏鲁之盾冷却完成", new Color(255, 183, 183), player.Center);
+                SendPlayerText(TShock.Players[player.whoAmI], "冲刺类饰品冷却完成", new Color(255, 183, 183), player.Center);
             }
         }
 
@@ -1159,10 +1184,9 @@ namespace Challenger
                         player.buffImmune[i] = true;
                     }
                 }
-                if (flag){TShock.Players[player.whoAmI].SendData((PacketTypes)50, "", player.whoAmI, 0f, 0f, 0f, 0);}
+                if (flag) { TShock.Players[player.whoAmI].SendData((PacketTypes)50, "", player.whoAmI, 0f, 0f, 0f, 0); }
             }
-
-            foreach (var effect in config.WormScarfSetBuff){TShock.Players[player.whoAmI].SetBuff(effect, 180, false);}
+            foreach (var effect in config.WormScarfSetBuff) { TShock.Players[player.whoAmI].SetBuff(effect, 180, false); }
         }
 
         public void VolatileGelatin(NpcStrikeEventArgs args)
@@ -1378,8 +1402,6 @@ namespace Challenger
             }
         }
 
-
-        /* //
         private void OnServerLeave(LeaveEventArgs args)
         {
             if (args == null || TShock.Players[args.Who] == null)
@@ -1392,13 +1414,13 @@ namespace Challenger
                 {
                     if (Collect.cplayers[args.Who].ExtraLife > 0)
                     {
-                        Player obj = Main.tplayer[args.Who];
+                        Player obj = Main.player[args.Who];
                         obj.statLifeMax -= Collect.cplayers[args.Who].ExtraLife;
                         NetMessage.SendData(16, -1, -1, NetworkText.Empty, args.Who, 0f, 0f, 0f, 0, 0, 0);
                     }
                     if (Collect.cplayers[args.Who].ExtraMana > 0)
                     {
-                        Player obj2 = Main.tplayer[args.Who];
+                        Player obj2 = Main.player[args.Who];
                         obj2.statManaMax -= Collect.cplayers[args.Who].ExtraMana;
                         NetMessage.SendData(42, -1, -1, NetworkText.Empty, args.Who, 0f, 0f, 0f, 0, 0, 0);
                     }
@@ -1418,7 +1440,6 @@ namespace Challenger
             }
             Collect.cplayers[args.Who].isActive = false;
         }
-        */
 
         private void OnGameUpdate(EventArgs args)
         {
